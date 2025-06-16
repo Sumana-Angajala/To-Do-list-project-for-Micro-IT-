@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced To-Do List</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f4;
+            --text-color: black;
+            --container-bg: white;
+        }
+        
+        .dark-mode {
+            --bg-color: #333;
+            --text-color: white;
+            --container-bg: #444;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 450px;
+            margin: 50px auto;
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+            width: 80%;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 8px;
+            background: #ddd;
+            margin: 5px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+
+        .high { background: #ff4d4d; color: white; }
+        .medium { background: #ffcc00; }
+        .low { background: #66cc66; }
+
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 8px;
+            margin: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced To-Do List</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+        
+        <input type="text" id="taskInput" placeholder="Add a new task...">
+        <input type="date" id="dueDate">
+        <select id="priority">
+            <option value="high">High Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="low">Low Priority</option>
+        </select>
+        <select id="category">
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="study">Study</option>
+        </select>
+        <button onclick="addTask()">Add Task</button>
+        
+        <h3>Filter Tasks</h3>
+        <select id="filter" onchange="filterTasks()">
+            <option value="all">Show All</option>
+            <option value="completed">Completed Tasks</option>
+            <option value="high">High Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="low">Low Priority</option>
+        </select>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        function addTask() {
+            let taskInput = document.getElementById("taskInput").value.trim();
+            let dueDate = document.getElementById("dueDate").value;
+            let priority = document.getElementById("priority").value;
+            let category = document.getElementById("category").value;
+
+            if (taskInput !== "") {
+                let taskList = document.getElementById("taskList");
+                let li = document.createElement("li");
+                li.textContent = `${taskInput} (Due: ${dueDate}) - ${category}`;
+                li.classList.add(priority);
+
+                li.addEventListener("click", function () {
+                    this.classList.toggle("completed");
+                    saveTasks();
+                });
+
+                let deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "❌";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.onclick = function () {
+                    taskList.removeChild(li);
+                    saveTasks();
+                };
+
+                li.appendChild(deleteBtn);
+                taskList.appendChild(li);
+                saveTasks();
+            }
+        }
+
+        function saveTasks() {
+            let tasks = [];
+            document.querySelectorAll("#taskList li").forEach(li => {
+                tasks.push({
+                    text: li.textContent.replace(" ❌", ""),
+                    priority: li.classList[0]
+                });
+            });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            let savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            savedTasks.forEach(task => {
+                let li = document.createElement("li");
+                li.textContent = task.text;
+                li.classList.add(task.priority);
+
+                li.addEventListener("click", function () {
+                    this.classList.toggle("completed");
+                    saveTasks();
+                });
+
+                let deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "❌";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.onclick = function () {
+                    document.getElementById("taskList").removeChild(li);
+                    saveTasks();
+                };
+
+                li.appendChild(deleteBtn);
+                document.getElementById("taskList").appendChild(li);
+            });
+        }
+
+        function filterTasks() {
+            let filter = document.getElementById("filter").value;
+            document.querySelectorAll("#taskList li").forEach(li => {
+                li.style.display = "block";
+
+                if (filter === "completed" && !li.classList.contains("completed")) {
+                    li.style.display = "none";
+                } else if (filter !== "all" && !li.classList.contains(filter)) {
+                    li.style.display = "none";
+                }
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+        }
+
+        function loadTheme() {
+            if (localStorage.getItem("theme") === "dark") {
+                document.body.classList.add("dark-mode");
+            }
+        }
+
+        window.onload = function() {
+            loadTasks();
+            loadTheme();
+        };
+    </script>
+</body>
+</html>
